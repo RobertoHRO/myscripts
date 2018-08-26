@@ -19,7 +19,7 @@ function plot() {
     plotWrapper(HTMLelement, plotinfo);
 }
 
-async function plotWrapper(HTMLelement, plotinfo) {
+async function plotWrapper(HTMLelement, plotinfo, layout) {
     //plotinfo = plotinfo.reverse();
 
     // ensure that no file is multiply loaded
@@ -57,7 +57,7 @@ async function plotWrapper(HTMLelement, plotinfo) {
                     vector_x[i] = vector_x[i-1]+plotinfo[index].dat_dt;
                 }
 
-                vector_y[i] = DB[plotinfo[index].dat_filename].getFloat32(off,false); 
+                vector_y[i] = DB[plotinfo[index].dat_filename].getFloat32(off, false); 
             }
 
             plotinfo[index].x = vector_x;
@@ -73,58 +73,77 @@ async function plotWrapper(HTMLelement, plotinfo) {
         }
 
     }
+    Plotly.newPlot(HTMLelement, plotinfo, layout);
+}    
 
- 
-    // construct layout
-    function constrLayout(numPlots){
-        if (numPlots==1) {
-            return {};
-        }else{
+// construct layout   
 
-            // subplot + padding + subplot + padding + subplot = 1
-            // numPlots*subplotHeigth + (numPlots-1)*padding = 1
-            // subplotHeigth = (1-(numPlots-1)*padding)/numPlots
+function defaultLayout(plotinfo){
+    
+    var allAxisNames = plotinfo.map(plotinfo => plotinfo.yaxis);
+    var uniqueAxisNames = [...new Set(allAxisNames)];
+    numPlots = uniqueAxisNames.length;
+    
+    if (numPlots==1) {
+        return {};
+    }else{
+
+        // subplot + padding + subplot + padding + subplot = 1
+        // numPlots*subplotHeigth + (numPlots-1)*padding = 1
+        // subplotHeigth = (1-(numPlots-1)*padding)/numPlots
+        
+        var padding = 0.05;
+        var subplotHeigth = (1-(numPlots-1)*padding)/numPlots;
+        var layout = {};
+        
+        for (let index = 0; index < numPlots; index++) {
+
+            // //index 0
+            // yStart = 0;     
+            // yEnd = subplotHeigth;
+
+            // // index 1
+            // yStart = subplotHeigth+padding;
+            // yend = 2*subplotHeigth+padding;
+
+            // // index 2
+            // yStart = 2*subplotHeigth+2*padding;
+            // yend   = 3*subplotHeigth+2*padding;
+
+
+            yStart =  index*subplotHeigth + index*padding;
+            yEnd   = (index+1)*subplotHeigth + index*padding;
+
+            // console.log('start - end:  ' + yStart + ' - ' + yEnd); 
             
-            var padding = 0.05;
-            var subplotHeigth = (1-(numPlots-1)*padding)/numPlots;
-            var layout = {};
-            layout
-            for (let index = 0; index < numPlots; index++) {
-
-                // //index 0
-                // yStart = 0;     
-                // yEnd = subplotHeigth;
-
-                // // index 1
-                // yStart = subplotHeigth+padding;
-                // yend = 2*subplotHeigth+padding;
-
-                // // index 2
-                // yStart = 2*subplotHeigth+2*padding;
-                // yend   = 3*subplotHeigth+2*padding;
-
-
-                yStart =  index*subplotHeigth + index*padding;
-                yEnd   = (index+1)*subplotHeigth + index*padding;
-
-                // console.log('start - end:  ' + yStart + ' - ' + yEnd); 
-                
-                layout["yaxis" + (index+1)] = {domain: [yStart, yEnd]};
-                layout["xaxis" + (index+1)] = {anchor: "y" + (index+1)};
-            }
+            layout["yaxis" + (index+1)] = { domain: [yStart, yEnd], 
+                                            title: "Toll",
+                                            titlefont: {size: 18}};
+            layout["xaxis" + (index+1)] = {anchor: "y" + (index+1)};
         }
-
-/*         var layout = {            
-            legend: {traceorder: 'reversed'},
-            xaxis1: {anchor: 'y1'},
-            xaxis2: {anchor: 'y2'},
-            xaxis3: {anchor: 'y3'},            
-            yaxis1: {domain: [0, 0.266]},
-            yaxis2: {domain: [0.366, 0.633]},
-            yaxis3: {domain: [0.733, 1]}
-            }; */
-        return layout;
     }
 
-    Plotly.newPlot(HTMLelement, plotinfo, constrLayout(plotinfo.length));
+/*         var layout = {            
+        legend: {traceorder: 'reversed'},
+        xaxis1: {anchor: 'y1'},
+        xaxis2: {anchor: 'y2'},
+        xaxis3: {anchor: 'y3'},            
+        yaxis1: {domain: [0, 0.266]},
+        yaxis2: {domain: [0.366, 0.633]},
+        yaxis3: {domain: [0.733, 1]}
+        }; */
+
+        layout["margin"] = {
+            l: 70,
+            r: 50,
+            b: 50,
+            t: 50,
+            pad: 4
+            };
+            layout["paper_bgcolor"] = '#FFFFFF';
+            layout["plot_bgcolor"]  = '#FFFFFF';
+            layout["showlegend"]= false;
+            
+            
+    return layout;
 }
